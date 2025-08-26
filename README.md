@@ -15,8 +15,8 @@ The script will collect informations from OS such as :
 - CPU Details ( such as No of cores , CPU type , CPU usage , Load Average of server)
 - Memory Details
 - Disk Detais
-- Network Detail ( like IP address , DNS SERVERS , DNS_DOMAIN , Total no of interfaces , List of interfaces )
-- SELINUX status
+- Network Detail ( like IP addresses , DNS SERVERS , DNS_DOMAIN , Total no of interfaces , List of interfaces )
+- AppArmor/SELINUX status
 - SWAP details
 
 ---
@@ -30,7 +30,7 @@ The script will collect informations from OS such as :
   
 
 
-> This script currently supports only rhel 7.x and 8.x (ubuntu servers will be added in future release)
+> This script currently supports only RHEL and Debian-based systems
  
 ----
 ## How to use this script
@@ -40,7 +40,7 @@ The script will collect informations from OS such as :
 
 - Switch to that user.
 
-- git clone https://github.com/NITHIN-JOHN-GEORGE/MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT.git 
+- git clone https://github.com/kirillstrelets/MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT.git 
 
 - cd MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT
 

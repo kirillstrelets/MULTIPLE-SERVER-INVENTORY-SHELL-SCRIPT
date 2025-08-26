@@ -2,9 +2,10 @@
 
 # SCRIPT TO GET INVENTORY OF MULTIPLE_SERVERS
 
-# AUTHOR : NITHIN JOHN GEORGE
+# Original Author : Nithin John George
+# Modified by     : Kirill Ovsiannikov (2025)
 
-USER=ansible
+USER=""
 
 # function to print header
 # this fn will print # upto terminal size
@@ -74,8 +75,11 @@ sleep 2
 
 # To check if netstat package is installed or not
 
-ssh -n -o StrictHostKeyChecking=No -T $USER@$server which netstat &> /dev/null || { echo -e "\033[0;35mNetstat package not installed on server : $server. Please install with \"sudo yum install net-tools -y\" and rerun the script to obtain inventory \033[0m ." ; echo -e "\n" ; exit 3 ;  }
-
+ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" which netstat &> /dev/null || {
+    echo -e "\033[0;35mThe 'netstat' utility is not installed on server: $server. Please install it using the appropriate package manager for your system (e.g. apt, yum, dnf). In many distributions it is provided by the 'net-tools' package. After installation, rerun the script to obtain inventory.\033[0m"
+    echo -e "\n"
+    exit 3
+}
 
 centre "SERVER INVENTORY OF $server" >> server_info.csv
 
@@ -83,8 +87,8 @@ centre "SERVER INVENTORY OF $server" >> server_info.csv
 
 R_OS_NAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/os-release | awk -F = 'NR==1 {print $2}' | tr -d '[""]')
 R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo hostname -f)
-R_OS_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server   sudo uname -p)
-R_OS_KERNEL_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo hostnamectl | awk -F : 'NR==9 {print $2}' | sed 's/^$//g')
+R_OS_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server   sudo uname -m)
+R_OS_KERNEL_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server "uname -r" 2>/dev/null)
 
 #HYPERVISOR TYPE
 
@@ -102,9 +106,10 @@ R_PRODUCTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo dmideco
 #CPU Info/Type
 
 R_CPUI=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep "model name" | awk -F : '{print $2}')
-R_CPUMHZ=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo /usr/bin/lscpu | grep -i "CPU MHz" | awk -F : '{print $2}' | sed 's/^[ \t]*//')
+R_CPUMHZ=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep -i 'cpu MHz' | awk -F: '{print $2}')
 R_CPU=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo top -b -n2 -d1 | grep "Cpu(s)" | tail -n1 | awk '{print $2+$4+$6}')
-R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 |grep "load average" |tail -n 1 | awk '{print $10 $11 $12}')
+#R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 |grep "load average" |tail -n 1 | awk '{print $10 $11 $12}')
+R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 | grep "load average" | tail -n1 | awk -F'load average: ' '{print $2}')
 R_CORES=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo nproc)
 
 # MEMORY Usage
@@ -119,7 +124,8 @@ R_DISK=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo df -Ph | grep 
 
 # UPTIME
 
-R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime|egrep "day" ; [[ `echo $?` -eq 0 ]] && uptime|awk '{print $3,$4,$5,$6}' | tr "," " " || uptime|awk '{print $3}'| tr -d ',')
+#R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime|egrep "day" ; [[ `echo $?` -eq 0 ]] && uptime|awk '{print $3,$4,$5,$6}' | tr "," " " || uptime|awk '{print $3}'| tr -d ',')
+R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime | sed -E 's/, *load average.*$//')
 
 # SWAP DETAILS
 
@@ -134,13 +140,21 @@ R_SWAP_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh 
 R_DNS_NAME_SERVERS=$( ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
 R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -f)
 R_DNS_DOMAIN=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -d)
-R_NETWORK_IP=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -i)
+R_NETWORK_IP=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -I)
 R_TOTAL_NETWORK_INTERFACES=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo" | wc -l)
 R_NETWORK_INTERFACES_LIST=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo")
 
-# SELINUX
+# AppArmor/SELINUX
+R_APPARMOR=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo aa-status 2>/dev/null | grep "apparmor module is" | awk '{print $4}' | sed 's/\.$//')
 
-R_SELINUX=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo sestatus | grep -E "SELinux status:" | awk -F : '{print $2}' | sed -e 's/^[ \s]*//')
+if [ -z "$R_APPARMOR" ]; then
+	R_APPARMOR="n/a"
+fi
+
+R_SELINUX=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo sestatus 2>/dev/null | grep -E "SELinux status:" | awk -F : '{print $2}' | sed -e 's/^[ \s]*//')
+if [ -z "$R_SELINUX" ]; then
+	R_SELINUX="n/a"
+fi
 
 
 echo "OS DETAILS" >> server_info.csv
@@ -173,9 +187,10 @@ echo "NETWORK-IP :$R_NETWORK_IP" >> server_info.csv
 echo "TOTAL-NETWORK-INTERFACES :$R_TOTAL_NETWORK_INTERFACES" >> server_info.csv
 echo "NETWORK-INTERFACES LIST :$R_NETWORK_INTERFACES_LIST"  >> server_info.csv
 echo "                          " >> server_info.csv
-echo "SELINUX STATUS" >> server_info.csv
+echo "AppArmor/SELINUX STATUS" >> server_info.csv
 echo "=============" >> server_info.csv
 echo "             " >> server_info.csv
+echo "AppArmor STATE : $R_APPARMOR" >> server_info.csv
 echo "SELINUX STATE : $R_SELINUX" >> server_info.csv
 echo "             " >> server_info.csv
 echo "CPU DETAILS" >> server_info.csv
@@ -183,9 +198,9 @@ echo "==========" >> server_info.csv
 echo "          " >> server_info.csv
 echo "CPU TYPE : $R_CPUI" >> server_info.csv
 echo "CPU SPEED IN MHz : $R_CPUMHZ " >> server_info.csv
+echo "NO OF CORES : $R_CORES" >> server_info.csv
 echo "CPU USAGE : $R_CPU %" >> server_info.csv
 echo "LOAD AVERAGE : $R_LOAD_AVERAGE" >> server_info.csv
-echo "NO OF CORES : $R_CORES"
 echo "          " >> server_info.csv
 echo "MEMORY DETAILS" >> server_info.csv
 echo "==============" >> server_info.csv
