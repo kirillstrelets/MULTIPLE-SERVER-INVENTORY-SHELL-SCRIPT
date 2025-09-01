@@ -7,6 +7,23 @@
 
 USER=""
 
+while getopts "u:" opt; do
+  case $opt in
+    u) USER="$OPTARG" ;;
+    *) 
+      echo "Usage: $0 -u <username>"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$USER" ]; then
+  echo "Please provide a username either by:"
+  echo "  1) Setting USER inside the script"
+  echo "  2) Running the script with -u <username>"
+  exit 1
+fi
+
 # function to print header
 # this fn will print # upto terminal size
 # example : ################################................... upto terminal ending specified using tput col command
