@@ -137,7 +137,7 @@ R_MEM_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free
 
 # DISK
 
-R_DISK=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo df -Ph | grep -vE 'Filesystem|tmpfs|/dev/sr0|cdrom' |  awk '{ printf  $1 " " $5 "\n" }' | column -t)
+R_DISK=$(ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" sudo df -Ph | grep -vE 'Filesystem|tmpfs|/dev/sr0|cdrom' | awk '{ print $1, $5 }' | column -t)
 
 # UPTIME
 
