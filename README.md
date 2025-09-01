@@ -1,67 +1,172 @@
-## Description
+# Multiple Server Inventory Script
 
-It's a bash script to show a complete inventory of an Linux OS and it might be useful for Linux system/support engineers who lot of servers in daily life . Instead of manually executing all the commands on each of server which is hell lot of task to do , you can execute this script and this script generates all needed inventory to a file which you can mail to your manager.
-
-This is a small project done by me after studying shell scripting and i have used mix of different concepts like functions , conditional statements , loops , exit status , command chaining , and used different text processing commands like awk ,sed , grep , cut etc ... 
-
-
-----
-
-## Feature
-The script will collect informations from OS such as :
-
-- OS Details ( such as Hostname , OS_name , OS_version , OS_Kernel_Version )
-- Hypervisor Details
-- CPU Details ( such as No of cores , CPU type , CPU usage , Load Average of server)
-- Memory Details
-- Disk Detais
-- Network Detail ( like IP addresses , DNS SERVERS , DNS_DOMAIN , Total no of interfaces , List of interfaces )
-- AppArmor/SELINUX status
-- SWAP details
+This script automates the collection of system information from multiple Linux servers (RHEL and Debian-based).  
+The results are stored in `server_info.csv`.
 
 ---
-## Pre-Requestes 
 
-- netstat package must be available
-- Passwordless SSH authentication b/w servers
-  ( Note If you are using password environment u have to use sshpass utility to provide password )
-- Common user accross all servers
-- Sudo privilege to that user
-  
+## Features
 
+The script collects the following information:
 
-> This script currently supports only RHEL and Debian-based systems
- 
-----
-## How to use this script
+- **OS Details**: Hostname, OS name, version, kernel version  
+- **Hypervisor Details**: type, manufacturer, serial number, product name  
+- **CPU Details**: model, frequency, number of cores, usage, load average  
+- **Memory Details**: total/used, usage percentage  
+- **Disk Details**: list of file systems and usage  
+- **Network Details**: IP addresses, DNS servers, domain, list of interfaces  
+- **Security**: AppArmor / SELinux status  
+- **Swap Details**: total, used, usage percentage  
+- **Uptime**
 
-```sh
-- Create a user common in all servers and make passwordless authentication connection b/w the servers. (Give sudo access to the user)
+---
 
-- Switch to that user.
+## Requirements
 
-- git clone https://github.com/kirillstrelets/MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT.git 
+- `net-tools` package (for `netstat`)  
+- Passwordless SSH authentication between servers  
+- A common user account across all servers  
+- The user must have `sudo` privileges
 
-- cd MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT
+---
 
-- chmod +x MULTIPLE_SERVER_INVENTORY.sh
+## Installation and Usage
 
-- Create a servers_list.txt with updated list of server in which you need inventory. 
+1. Create a user on all servers and set up passwordless SSH:
 
-- Update the username in the script starting
+   ```bash
+   ssh-keygen -t ed25519
+   ssh-copy-id user@server1
+   ssh-copy-id user@server2
+   ...
+   ```
 
-  USER=<username>
+2. Clone the repository:
 
-- ./MULTIPLE_SERVER_INVENTORY.sh
+   ```bash
+   git clone https://github.com/kirillstrelets/MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT.git
+   cd MULTIPLE-SERVER-INVENTORY-SHELL-SCRIPT
+   ```
+
+3. Make the script executable:
+
+   ```bash
+   chmod +x multiple_server_inventory.sh
+   ```
+
+4. Create a `servers_list.txt` file containing a list of servers (one per line).
+
+5. Run the script:
+
+   ```bash
+   ./multiple_server_inventory.sh -u <username>
+   ```
+
+   Alternatively, set the username directly in the script:
+
+   ```bash
+   USER="<username>"
+   ```
+
+---
+
+## Example
+
+### Running the script
+```bash
+./multiple_server_inventory.sh -u admin
 ```
 
-## Script Running
+### Sample output (`server_info.csv`)
+```text
+################################################################################
 
-![SCRIPT RUNNING](https://user-images.githubusercontent.com/96073033/147854106-56067071-e8a2-4687-b2d8-37d371b23824.JPG)
+                       SERVER INVENTORY OF 192.168.1.202
 
-## Output
+################################################################################
 
-![OUTPUT 1](https://user-images.githubusercontent.com/96073033/147854305-ce43c539-89bc-4b45-bc9e-a31978e33737.JPG)
-![OUTPUT 2](https://user-images.githubusercontent.com/96073033/147854307-d8d17f3f-ef47-461c-b8d5-9400822dc2ca.JPG)
-![OUTPUT 3](https://user-images.githubusercontent.com/96073033/147854309-560ea8a4-955c-4b4f-9e15-9a496d522911.JPG)
-![OUTPUT 4](https://user-images.githubusercontent.com/96073033/147854318-9a0cfc35-28aa-40d0-a98b-f32bfbe57762.JPG)
+OS DETAILS
+==========
+          
+HOSTNAME : pc1.test.local
+OS_NAME: CentOS Linux
+OS_VERSION: x86_64
+OS_KERNEL_VERSION: 3.10.0-1062.9.1.el7.x86_64
+          
+SERVER UPTIME
+=============
+             
+UPTIME :  16:06:32 up 5 days,  3:06,  3 users
+             
+HYPERVISOR DETAILS
+==================
+                  
+HYPERVISOR :  VMware Virtual Platform
+MANUFACTURER : VMware, Inc.
+SERIAL NO :VMware-42 32 f4 fc b1 49 29 f6-d4 38 d1 17 78 4a 24 cb
+PRODUCT NAME :  VMware Virtual Platform
+          
+NETWORK DETAILS
+==================
+                  
+DNS_NAME_SERVERS: 192.168.1.1
+192.168.1.2
+DNS_DOMAIN :test.local
+NETWORK-IP :192.168.1.202
+TOTAL-NETWORK-INTERFACES :1
+NETWORK-INTERFACES LIST :ens192
+                          
+AppArmor/SELINUX STATUS
+=============
+             
+AppArmor STATE : n/a
+SELINUX STATE : disabled
+             
+CPU DETAILS
+==========
+          
+CPU TYPE :  Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+ Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+ Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+ Intel(R) Xeon(R) Gold 5220R CPU @ 2.20GHz
+CPU SPEED IN MHz :  2199.999
+ 2199.999
+ 2199.999
+ 2199.999 
+NO OF CORES : 4
+CPU USAGE : 2,2 %
+LOAD AVERAGE : 1,07, 1,10, 1,07
+          
+MEMORY DETAILS
+==============
+              
+TOTAL MEMORY : 2,0G
+USED MEMORY : 1,3G 
+MEMORY USAGE : 64,014 %
+          
+DISK DETAILS
+==============
+              
+/dev/mapper/centos-root  55%
+/dev/sda1                17%
+              
+SWAP DETAILS
+============
+            
+TOTAL SWAP : 1,6G
+USED SWAP : 9,5M
+SWAP USAGE : 0,5%
+
+################################################################################
+
+                                      END
+
+################################################################################
+```
+
+---
+
+## Authors
+
+- Original Author: [Nithin John George](https://github.com/NITHIN-JOHN-GEORGE)  
+- Modified (2025): [Kirill Ovsiannikov](https://github.com/kirillstrelets)
