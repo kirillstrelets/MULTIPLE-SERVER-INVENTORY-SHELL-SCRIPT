@@ -8,20 +8,20 @@
 USER=""
 
 while getopts "u:" opt; do
-  case $opt in
+    case $opt in
     u) USER="$OPTARG" ;;
-    *) 
-      echo "Usage: $0 -u <username>"
-      exit 1
-      ;;
-  esac
+    *)
+    echo "Usage: $0 -u <username>"
+    exit 1
+    ;;
+    esac
 done
 
 if [ -z "$USER" ]; then
-  echo "Please provide a username either by:"
-  echo "  1) Setting USER inside the script"
-  echo "  2) Running the script with -u <username>"
-  exit 1
+echo "Please provide a username either by:"
+echo "  1) Setting USER inside the script"
+echo "  2) Running the script with -u <username>"
+exit 1
 fi
 
 # function to print header
@@ -32,36 +32,36 @@ fi
 
 print_header()
 {
-printf "\n"
-printf "#%.0s" $(seq 1  $(tput cols))
-printf "\n"
-printf "\n"
+    printf "\n"
+    printf "#%.0s" $(seq 1  $(tput cols))
+    printf "\n"
+    printf "\n"
 }
 
 #function to center the specified message
 
 centre()
 {
-message=$1
-col=$(tput cols)
-message_length=$(echo ${#1})
-pre_space=$(($((col-message_length))/2))
-print_header
-printf " %.0s" $(seq 1 $pre_space)
-printf "%s" "$1"
-printf "\n"
-print_header
+    message=$1
+    col=$(tput cols)
+    message_length=$(echo ${#1})
+    pre_space=$(($((col-message_length))/2))
+    print_header
+    printf " %.0s" $(seq 1 $pre_space)
+    printf "%s" "$1"
+    printf "\n"
+    print_header
 }
 
 # function to check if servers_list.txt file exists or not
 
 check_server_list_file()
 {
-if [[ ! -e servers_list.txt ]]
-then
-centre " Please create <<servers_list.txt>> file which contains IP address of all servers "
-exit 1
-fi
+    if [[ ! -e servers_list.txt ]]
+    then
+        centre " Please create <<servers_list.txt>> file which contains IP address of all servers "
+        exit 1
+    fi
 }
 
 sudo_status=$(sudo -v 2>/dev/null 1>/dev/null ; echo $?)
@@ -70,107 +70,105 @@ if [[ $(id -u) -eq 0 ]] || [[ $sudo_status -eq  0 ]]
 
 then
 
-centre "WELCOME TO SERVER INVENTORY SCRIPT ( Note : For this script to work there should be Passwordless authentication  b/w the servers )"
+    centre "WELCOME TO SERVER INVENTORY SCRIPT ( Note : For this script to work there should be Passwordless authentication  b/w the servers )"
 
-check_server_list_file
+    check_server_list_file
 
-# We use server_info.csv to see the final inventory of all servers , so checking if it already exist , if exists then remove and create again.
+    # We use server_info.csv to see the final inventory of all servers , so checking if it already exist , if exists then remove and create again.
 
-rm -rf server_info.csv 1>/dev/null 2>/dev/null
-touch server_info.csv
+    rm -rf server_info.csv 1>/dev/null 2>/dev/null
+    touch server_info.csv
 
 
-# Starting Loop for executing commands on each server in servers_list.txt file
+    # Starting Loop for executing commands on each server in servers_list.txt file
 
-while read server
+    while read server
 
-do
+    do
 
-centre " PLEASE WAIT QUERYING INFO ON $server"
+        centre " PLEASE WAIT QUERYING INFO ON $server"
 
-sleep 2
+        sleep 2
 
-# To check if netstat package is installed or not
+        # To check if netstat package is installed or not
 
-ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" which netstat &> /dev/null || {
-    echo -e "\033[0;35mThe 'netstat' utility is not installed on server: $server. Please install it using the appropriate package manager for your system (e.g. apt, yum, dnf). In many distributions it is provided by the 'net-tools' package. After installation, rerun the script to obtain inventory.\033[0m"
-    echo -e "\n"
-    exit 3
-}
+        ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" which netstat &> /dev/null || {
+            echo -e "\033[0;35mThe 'netstat' utility is not installed on server: $server. Please install it using the appropriate package manager for your system (e.g. apt, yum, dnf). In many distributions it is provided by the 'net-tools' package. After installation, rerun the script to obtain inventory.\033[0m"
+            echo -e "\n"
+            exit 3
+        }
 
-centre "SERVER INVENTORY OF $server" >> server_info.csv
+        centre "SERVER INVENTORY OF $server" >> server_info.csv
 
-#OS-DETAILS
+        #OS-DETAILS
 
-R_OS_NAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/os-release | awk -F = 'NR==1 {print $2}' | tr -d '[""]')
-R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo hostname -f)
-R_OS_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server   sudo uname -m)
-R_OS_KERNEL_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server "uname -r" 2>/dev/null)
+        R_OS_NAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/os-release | awk -F = 'NR==1 {print $2}' | tr -d '[""]')
+        R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo hostname -f)
+        R_OS_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server   sudo uname -m)
+        R_OS_KERNEL_VERSION=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server "uname -r" 2>/dev/null)
 
-#HYPERVISOR TYPE
+        #HYPERVISOR TYPE
 
-R_HTYPE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo dmidecode | grep "Product Name" | awk -F : 'NR==1 {print $2}' | sed 's/^$//g')
+        R_HTYPE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo dmidecode | grep "Product Name" | awk -F : 'NR==1 {print $2}' | sed 's/^$//g')
 
-#HYPERVISOR MANUFACTURER :-
+        #HYPERVISOR MANUFACTURER :-
 
-R_MANUFACTURER=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo dmidecode --type system | grep Manufacturer | awk -F : '{print $2}')
-R_SERIAL_NO=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo dmidecode -s system-serial-number)
+        R_MANUFACTURER=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo dmidecode --type system | grep Manufacturer | awk -F : '{print $2}')
+        R_SERIAL_NO=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo dmidecode -s system-serial-number)
 
-#PRODUCT NAME :-
+        #PRODUCT NAME :-
 
-R_PRODUCTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo dmidecode | grep "Product Name" | awk -F : 'NR==1 {print $2}' | sed 's/^$//g')
+        R_PRODUCTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo dmidecode | grep "Product Name" | awk -F : 'NR==1 {print $2}' | sed 's/^$//g')
 
-#CPU Info/Type
+        #CPU Info/Type
 
-R_CPUI=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep "model name" | awk -F : '{print $2}')
-R_CPUMHZ=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep -i 'cpu MHz' | awk -F: '{print $2}')
-R_CPU=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo top -b -n2 -d1 | grep "Cpu(s)" | tail -n1 | awk '{print $2+$4+$6}')
-#R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 |grep "load average" |tail -n 1 | awk '{print $10 $11 $12}')
-R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 | grep "load average" | tail -n1 | awk -F'load average: ' '{print $2}')
-R_CORES=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo nproc)
+        R_CPUI=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep "model name" | awk -F : '{print $2}')
+        R_CPUMHZ=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /proc/cpuinfo | grep -i 'cpu MHz' | awk -F: '{print $2}')
+        R_CPU=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server  sudo top -b -n2 -d1 | grep "Cpu(s)" | tail -n1 | awk '{print $2+$4+$6}')
+        R_LOAD_AVERAGE=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo top -n 2 -b -d 2 | grep "load average" | tail -n1 | awk -F'load average: ' '{print $2}')
+        R_CORES=$(ssh -n  -o StrictHostKeyChecking=No -T $USER@$server sudo nproc)
 
-# MEMORY Usage
+        # MEMORY Usage
 
-R_MEM_TOTAL=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Mem" | awk '{print $2}')
-R_MEM_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Mem" |  awk '{print $3}')
-R_MEM_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -m | grep "Mem" | awk '{print $3/$2 * 100}' | awk -F . '{print $1}')
+        R_MEM_TOTAL=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Mem" | awk '{print $2}')
+        R_MEM_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Mem" |  awk '{print $3}')
+        R_MEM_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -m | grep "Mem" | awk '{print $3/$2 * 100}' | awk -F . '{print $1}')
 
-# DISK
+        # DISK
 
-R_DISK=$(ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" sudo df -Ph | grep -vE 'Filesystem|tmpfs|/dev/sr0|cdrom' | awk '{ print $1, $5 }' | column -t)
+        R_DISK=$(ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" sudo df -Ph | grep -vE 'Filesystem|tmpfs|/dev/sr0|cdrom' | awk '{ print $1, $5 }' | column -t)
 
-# UPTIME
+        # UPTIME
 
-#R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime|egrep "day" ; [[ `echo $?` -eq 0 ]] && uptime|awk '{print $3,$4,$5,$6}' | tr "," " " || uptime|awk '{print $3}'| tr -d ',')
-R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime | sed -E 's/, *load average.*$//')
+        R_UPTIME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo uptime | sed -E 's/, *load average.*$//')
 
-# SWAP DETAILS
+        # SWAP DETAILS
 
-R_SWAP_TOTAL=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $2}')
+        R_SWAP_TOTAL=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $2}')
 
-R_SWAP_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $3}')
+        R_SWAP_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $3}')
 
-#R_SWAP_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -m | grep "Swap" | awk '{print $3/$2 * 100}' | awk -F . '{print $1}')
+        #R_SWAP_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -m | grep "Swap" | awk '{print $3/$2 * 100}' | awk -F . '{print $1}')
 
-#NETWORK INFORMATION
+        #NETWORK INFORMATION
 
-R_DNS_NAME_SERVERS=$( ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
-R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -f)
-R_DNS_DOMAIN=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -d)
-R_NETWORK_IP=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -I)
-R_TOTAL_NETWORK_INTERFACES=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo" | wc -l)
-R_NETWORK_INTERFACES_LIST=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo")
+        R_DNS_NAME_SERVERS=$( ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
+        R_HOSTNAME=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -f)
+        R_DNS_DOMAIN=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -d)
+        R_NETWORK_IP=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server hostname -I)
+        R_TOTAL_NETWORK_INTERFACES=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo" | wc -l)
+        R_NETWORK_INTERFACES_LIST=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo netstat -i | awk '{print $1}' | egrep -v "Kernel|Iface|lo")
 
-# AppArmor/SELINUX
-R_APPARMOR=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo aa-status 2>/dev/null | grep "apparmor module is" | awk '{print $4}' | sed 's/\.$//')
+        # AppArmor/SELINUX
+        R_APPARMOR=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo aa-status 2>/dev/null | grep "apparmor module is" | awk '{print $4}' | sed 's/\.$//')
 
-if [ -z "$R_APPARMOR" ]; then
-	R_APPARMOR="n/a"
-fi
+        if [ -z "$R_APPARMOR" ]; then
+        R_APPARMOR="n/a"
+    fi
 
-R_SELINUX=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo sestatus 2>/dev/null | grep -E "SELinux status:" | awk -F : '{print $2}' | sed -e 's/^[ \s]*//')
-if [ -z "$R_SELINUX" ]; then
-	R_SELINUX="n/a"
+    R_SELINUX=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo sestatus 2>/dev/null | grep -E "SELinux status:" | awk -F : '{print $2}' | sed -e 's/^[ \s]*//')
+    if [ -z "$R_SELINUX" ]; then
+    R_SELINUX="n/a"
 fi
 
 
@@ -243,12 +241,12 @@ centre " DONE "
 done < servers_list.txt
 
 
-centre " PLEASE GO TO server_info.csv in $(pwd) to SEE SERVER INVERTORY"
-centre "Thank You for using Inventory Script" >> server_info.csv
+centre " PLEASE GO TO server_info.csv in $(pwd) to SEE SERVER INVENTORY"
+centre "END" >> server_info.csv
 
 
 else
 
-echo "Sorry u cannot run this script as you are not an root user or the user doesnt have sudo privileges"
+    echo "You cannot run this script because you are not a root user, or your account does not have sufficient sudo privileges."
 
 fi
