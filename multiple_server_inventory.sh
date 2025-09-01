@@ -145,10 +145,8 @@ then
         # SWAP DETAILS
 
         R_SWAP_TOTAL=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $2}')
-
         R_SWAP_USED=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -mh | grep "Swap" | awk '{print $3}')
-
-        #R_SWAP_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T $USER@$server sudo free -m | grep "Swap" | awk '{print $3/$2 * 100}' | awk -F . '{print $1}')
+        R_SWAP_PERCENTAGE=$(ssh -n -o StrictHostKeyChecking=No -T "$USER@$server" sudo free -m | awk '/Swap/ {if ($2>0) printf "%.1f%%", $3/$2*100; else print "0%"}')
 
         #NETWORK INFORMATION
 
@@ -234,7 +232,7 @@ echo "============" >> server_info.csv
 echo "            " >> server_info.csv
 echo "TOTAL SWAP : $R_SWAP_TOTAL" >> server_info.csv
 echo "USED SWAP : $R_SWAP_USED" >> server_info.csv
-#echo "SWAP USAGE : $R_SWAP_PERCENTAGE"
+echo "SWAP USAGE : $R_SWAP_PERCENTAGE" >> server_info.csv
 
 centre " DONE "
 
